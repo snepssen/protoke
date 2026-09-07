@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "protoke"
+version = "0.2.0"
+description = "Karaoke and narration videos fronted by an animated protogen visor face"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "snepssen" }]
+keywords = ["protogen", "karaoke", "lyrics", "video", "subtitles", "ass",
+            "transcription", "visemes"]
+classifiers = [
+  "Environment :: Console",
+  "Environment :: Web Environment",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Multimedia :: Video",
+]
+# The tool itself is standard library only. Transcription engines are
+# optional: with none installed it still renders from a timed JSON file.
+dependencies = []
+
+[project.optional-dependencies]
+# The portable default. Runs Parakeet TDT on Windows, Linux and macOS,
+# x86 and Arm, with or without a GPU.
+parakeet = ["onnx-asr[cpu,hub]>=0.6"]
+# Apple silicon fast path.
+mlx = ["parakeet-mlx>=0.3"]
+# Fallback engine, different model family.
+whisper = ["faster-whisper>=1.0"]
+# Isolate the voice so the face can follow wordless singing. Pulls PyTorch —
+# around a gigabyte — so it is deliberately not part of any other extra.
+# audioread is a dependency audio-separator needs but does not declare.
+separation = ["audio-separator[cpu]>=0.28", "audioread"]
+# Show the interface in a desktop window instead of a browser tab. Uses the
+# operating system's own webview, so it costs a couple of megabytes rather
+# than the couple of hundred an embedded browser would.
+desktop = ["pywebview>=5.0"]
+
+[project.urls]
+Homepage = "https://github.com/snepssen/protoke"
+Source = "https://github.com/snepssen/protoke"
+
+[project.scripts]
+protoke = "app:main"
+
+[tool.setuptools]
+py-modules = [
+  "app", "face_audio", "face_expression", "face_matrix", "face_presets",
+  "face_preview", "face_render", "face_shapes", "face_visemes",
+  "lyrics_align", "lyrics_engine", "platform_support", "track_assets",
+  "video_effects", "video_formats", "json_to_srt",
+]
+
+[tool.setuptools.packages.find]
+include = ["transcribe*", "separate*"]
+
+[tool.setuptools.package-data]
+"*" = ["index.html"]

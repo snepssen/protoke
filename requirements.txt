@@ -1,0 +1,34 @@
+# Protoke — optional extras. The tool itself is standard library
+# only, and renders with nothing from this file installed.
+
+# --- Transcription -------------------------------------------------------
+# Needed only to transcribe. A timed JSON file beside each track works
+# without any of these.
+#
+# Portable default (Windows, Linux, macOS; x86 and Arm; CPU or GPU):
+onnx-asr[cpu,hub]>=0.6
+#
+# Apple silicon fast path — uncomment on an M-series Mac:
+# parakeet-mlx>=0.3
+#
+# Fallback, different model family — uncomment if Parakeet cannot be used:
+# faster-whisper>=1.0
+
+# --- Vocal separation ----------------------------------------------------
+# Needed only so the face can follow singing that has no words in the lyric
+# sheet — a yodel, a held note. Without it the voice is estimated from the
+# full mix, which is less accurate but costs nothing.
+#
+# This is by far the heaviest thing here: it pulls PyTorch, around a
+# gigabyte, whether or not you have a GPU. Uncomment if you want it.
+#
+# audio-separator[cpu]>=0.28
+# audioread          # audio-separator needs it but does not declare it
+
+# --- Desktop window ------------------------------------------------------
+# Optional. Shows the interface in a native window rather than a browser tab,
+# using the operating system's own webview — a couple of megabytes, not the
+# couple of hundred an embedded browser would cost. Without it the app opens
+# in the default browser exactly as before.
+#
+# pywebview>=5.0
