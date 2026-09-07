@@ -38,6 +38,13 @@ logs/
 *.log
 *.pid
 
+# The project page's own demo clip is published on purpose — the one exception
+# to the media rules above, and it has to come after them because gitignore
+# takes the last matching rule. scripts/check_release.py enforces the same
+# narrow allowance, with a size budget.
+!docs/*.mp4
+!docs/*.webm
+
 # Generated corpora and reports
 clips/
 held-back/

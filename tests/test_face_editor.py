@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import tempfile
@@ -200,6 +201,21 @@ class InterfaceLayoutTests(unittest.TestCase):
         self.assertIn('id="faceConfigure"', self.markup)
         for page in ("facePageLook", "facePageMotion", "facePageShape"):
             self.assertIn(f'id="{page}"', self.markup)
+
+    def test_the_hidden_attribute_actually_hides(self):
+        """Fields toggled with .hidden must disappear, not merely claim to.
+
+        The browser's own ``[hidden]{display:none}`` is a single class of
+        specificity, so any rule here that sets display — ``.field`` sets
+        grid — beats it on source order and the field stays on screen. The
+        MacWhisper command box showed for every engine because of this.
+        """
+        rules = re.findall(r"\[hidden\]\s*\{([^}]*)\}", self.markup)
+        self.assertTrue(rules, "no [hidden] rule in the page's own CSS")
+        winning = [body for body in rules if "!important" in body]
+        self.assertTrue(
+            winning,
+            "[hidden] must win against rules like .field{display:grid}")
 
     def test_the_tools_have_their_own_settings(self):
         self.assertIn('id="settingsModal"', self.markup)

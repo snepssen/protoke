@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protoke</title>
+<meta name="description" content="Karaoke and narration videos fronted by an animated protogen visor face — drawn as vector outlines by the same subtitle pass that draws the lyrics, with no image sequence and no video layer.">
+<meta property="og:title" content="Protoke">
+<meta property="og:description" content="proto + karaoke. A karaoke and narration renderer whose face is a subtitle track.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Libre+Franklin:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+<header id="top">
+  <span class="badge"><span class="dot"></span>macOS · Windows · Linux · MIT</span>
+  <h1>Protoke</h1>
+  <p class="subhead"><em>proto</em> + <em>karaoke</em>. A karaoke and narration renderer with a protogen visor face that mouths the words — drawn as vector outlines by the same subtitle pass that draws the lyrics, so there is no image sequence and no video layer to composite.</p>
+  <div class="headmeta">
+    <span><b>14</b> dials shape the face</span>
+    <span><b>11</b> expressions</span>
+    <span><b>4</b> transcription engines, one free everywhere</span>
+    <span><b>173</b> checks passing</span>
+    <span><b>Local-first.</b> Nothing leaves the machine</span>
+  </div>
+</header>
+</div>
+
+<nav class="jump" aria-label="Jump to a section">
+  <div class="wrap">
+    <a class="mark" href="#top">Protoke</a>
+    <ul>
+      <li><a href="#demo">Demo</a></li>
+      <li><a href="#how">How</a></li>
+      <li><a href="#face">The face</a></li>
+      <li><a href="#app">The app</a></li>
+      <li><a href="#install">Install</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<section id="demo">
+  <p class="eyebrow">Twenty-eight seconds</p>
+  <h2>Everything moving here was written into a subtitle file</h2>
+  <p class="lede">The voice is synthetic, from a locally trained Piper model. The background is one black PNG that never changes. Every eye, every mouth shape and every word of text is a single libass pass over that still — no frames were animated, and nothing was composited.</p>
+
+  <div class="player">
+    <video controls preload="metadata" poster="img/render-black.png" width="1600" height="900">
+      <source src="protoke-demo.mp4" type="video/mp4">
+      Your browser cannot play this clip. It is a 1.7 MB MP4 at
+      <a href="protoke-demo.mp4">protoke-demo.mp4</a>.
+    </video>
+  </div>
+  <p class="cap">27.5 seconds, 1920×1080, 1.7 MB. The mouth follows the words from their spelling; the eyes blink on their own schedule, roughly once every seven seconds. There is no beat in this recording, so the head breathes rather than nods — the tool measured that and said so in its log rather than inventing a tempo.</p>
+
+  <div class="readout three">
+    <div class="cell"><div class="n">601</div><div class="l">subtitle events drawing the face across those 28 seconds</div></div>
+    <div class="cell"><div class="n">668<small>kB</small></div><div class="l">the face's <b>.ass</b> track — the whole animation, as text</div></div>
+    <div class="cell"><div class="n">0</div><div class="l">image sequences, video layers or overlay renders</div></div>
+  </div>
+</section>
+
+<section id="how">
+  <p class="eyebrow">Why it works this way</p>
+  <h2>A face is cheaper as geometry than as pictures</h2>
+  <p>The obvious way to put an animated face on a video is to render frames and composite them. That means an image sequence, an alpha channel, a second encoder pass, and a pile of intermediate files that all have to agree about size and frame rate.</p>
+  <p>ASS subtitles can draw filled vector shapes. libass is already in the ffmpeg command drawing the lyrics. So the face is emitted as drawing commands into a second subtitle track and burned in by the pass that was going to run anyway. One ffmpeg invocation, no intermediates, and the "animation" is a text file you can open and read.</p>
+  <p>The cost is that everything has to be expressible as outlines and timings, which turned out to be a useful constraint rather than a limit.</p>
+
+  <div class="note"><b>It is optional in both directions.</b> Switch the face off for a plain karaoke render, or drop the lyrics and the artwork and put the face alone on black over a voice track — which is what the clip above is.</div>
+</section>
+
+<section id="face">
+  <p class="eyebrow">The face</p>
+  <h2>Eleven expressions, no sprite sheet</h2>
+  <p class="lede">Early versions swapped between fixed shapes and looked exactly like that: rigid, held together with tape. The fix was to stop picking expressions and start blending dial values, the way a protogen firmware blends morph weights.</p>
+  <p>Six numbers describe an eye — openness, bow, slant, hook, roundness, weight. Six more describe the mouth. Two describe the whole face. Every named expression is just a point in that space, and anything between two of them is a valid face, so a blink is a continuous move rather than a cut.</p>
+
+  <div class="stage">
+    <canvas id="faceCanvas" width="1040" height="460" aria-label="Animated protogen-style visor face, blinking and breathing"></canvas>
+  </div>
+  <div class="stagebar">
+    <button class="primary" id="faceToggle" type="button" data-playing="false">Play the face</button>
+    <span class="status" id="faceStatus">64 frames · one loop</span>
+  </div>
+  <p class="cap">These are the renderer's own frames. The geometry was exported straight out of the Python that writes the subtitle track, so the page cannot drift from the videos — it has no drawing code of its own, only a replay loop. What you are watching is the idle state: breathing, because there is no beat.</p>
+
+  <div class="faces">
+    <div><b>◤‿◥</b><span>visor</span></div>
+    <div><b>◤w◥</b><span>grin</span></div>
+    <div><b>︿﹀</b><span>hooked</span></div>
+    <div><b>▶_◀</b><span>sharp</span></div>
+    <div><b>¬‿¬</b><span>smug</span></div>
+    <div><b>^_^</b><span>content</span></div>
+    <div><b>^w^</b><span>happy</span></div>
+    <div><b>o_o</b><span>wide</span></div>
+    <div><b>-_-</b><span>sleepy</span></div>
+    <div><b>^o^</b><span>delighted</span></div>
+    <div><b>owo</b><span>curious</span></div>
+  </div>
+  <p class="cap">Each of these is a set of dial values, not a drawing. <b>sharp</b> is the clearest case: anger reads as straight edges and stillness, so it raises the sharpness dial — which bends the curves toward their control polygons — and damps the idle motion, rather than swapping in an angry picture.</p>
+</section>
+
+<section id="app">
+  <p class="eyebrow">The app</p>
+  <h2>A local page, not a cloud service</h2>
+  <p>The interface is a token-protected page on <code>127.0.0.1</code>. With <code>pywebview</code> installed it opens in the operating system's own webview — a couple of megabytes, rather than the couple of hundred an embedded browser costs — and in your default browser otherwise.</p>
+
+  <div class="shot"><img src="img/ui-main.png" alt="Protoke's main window: source and output panels on the left, and a live 1920x1080 preview frame on the right showing the visor face above five lines of lyrics with one word highlighted" loading="lazy" width="1800" height="1266"></div>
+  <p class="cap">The preview is a real layout at output resolution, with the title-safe area drawn as a guide. Changing a colour, a typeface or the line count redraws it immediately; nothing here needs a render to check.</p>
+
+  <div class="shot"><img src="img/ui-face-shape.png" alt="The Face configurator's Shape tab: a live preview of the face above fourteen labelled sliders grouped into eyes, mouth and whole face" loading="lazy" width="1800" height="1266"></div>
+  <p class="cap">All fourteen dials, with the preview above them rendered by the same code that renders the video — so the shape on screen is the shape you will get, not an approximation drawn a second time in JavaScript. Saved faces become presets you can pick per track.</p>
+
+  <div class="shot"><img src="img/ui-settings.png" alt="The Settings sheet showing the transcription engine set to Parakeet ONNX, described as free and running on Windows, Linux and macOS, and vocal separation switched off" loading="lazy" width="1800" height="1266"></div>
+  <p class="cap">Transcription and separation live behind a probe: the app asks each engine whether it can actually run here and reports what it finds, rather than assuming. Vocal separation stays off by default because it pulls PyTorch — about a gigabyte — for an accuracy gain most tracks do not need.</p>
+</section>
+
+<section id="install">
+  <p class="eyebrow">Get it</p>
+  <h2>Python, ffmpeg, and nothing else that is mandatory</h2>
+  <p class="lede">The rendering, alignment, face and subtitle code imports only the standard library. Every dependency belongs to an optional transcription or separation engine, so with a timed JSON file beside your track the tool runs with nothing installed at all.</p>
+
+  <div class="install">
+    <div class="cmd">
+      <div class="cmdhead"><span class="os">macOS · Linux</span><button class="copy" type="button" data-copy="git clone https://github.com/snepssen/protoke.git &amp;&amp; cd protoke &amp;&amp; ./setup.sh">Copy</button></div>
+      <pre><code>git clone https://github.com/snepssen/protoke.git
+cd protoke
+./setup.sh          # creates .venv, installs Parakeet
+./start.sh</code></pre>
+    </div>
+    <div class="cmd">
+      <div class="cmdhead"><span class="os">Windows</span><button class="copy" type="button" data-copy="git clone https://github.com/snepssen/protoke.git &amp;&amp; cd protoke &amp;&amp; setup.bat">Copy</button></div>
+      <pre><code>git clone https://github.com/snepssen/protoke.git
+cd protoke
+setup.bat
+start.bat</code></pre>
+    </div>
+  </div>
+
+  <p class="cap">ffmpeg must be built with the <code>subtitles</code> (libass) filter — <code>brew install ffmpeg</code>, <code>winget install Gyan.FFmpeg</code>, or <code>apt install ffmpeg</code> all provide one.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Engine</th><th>Where it runs</th><th>Needed for</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">onnx-parakeet</td><td>Windows, Linux, macOS · x86 and Arm</td><td>Transcription</td><td><span class="pill found">Default</span></td></tr>
+      <tr><td class="mono">mlx-parakeet</td><td>Apple silicon</td><td>Transcription, faster</td><td><span class="pill pub">Optional</span></td></tr>
+      <tr><td class="mono">faster-whisper</td><td>Anywhere</td><td>Fallback model family</td><td><span class="pill prov">Optional</span></td></tr>
+      <tr><td class="mono">macwhisper</td><td>macOS</td><td>Transcription via MacWhisper Pro</td><td><span class="pill prov">Optional</span></td></tr>
+      <tr><td class="mono">audio-separator</td><td>Anywhere</td><td>Wordless singing — yodels, held notes</td><td><span class="pill prov">Optional · ~1 GB</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="cap">Replacing MacWhisper was the point of the rewrite: it is macOS-only and paid, and the tool used to need it. Parakeet TDT through <code>onnx-asr</code> does the same job free on every desktop platform.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Source</h3>
+      <div class="meta">MIT · Python 3.10+</div>
+      <p>The whole thing, including the tests and the release check that has to pass before anything ships.</p>
+      <div class="get"><a href="https://github.com/snepssen/protoke">github.com/snepssen/protoke →</a></div>
+    </div>
+    <div class="card">
+      <h3>Where it came from</h3>
+      <div class="meta">Split out of tools-core</div>
+      <p>It began as one directory of a utility repository and outgrew it. The other field tools are still there.</p>
+      <div class="get"><a href="https://snepssen.github.io/tools-core/">tools-core →</a></div>
+    </div>
+    <div class="card">
+      <h3>The voice</h3>
+      <div class="meta">Piper · GPL-3.0</div>
+      <p>The narration in the clip above was synthesised by Voice Forge, the text-to-speech half of this workshop.</p>
+      <div class="get"><a href="https://snepssen.github.io/voice-forge/">Voice Forge →</a></div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <p class="eyebrow">If something looks wrong</p>
+  <h2>Say so</h2>
+  <p>Bug reports and shape critiques are equally welcome — the face got most of its improvements from someone describing exactly what looked off about it.</p>
+  <div class="contact">
+    <a href="https://github.com/snepssen/protoke/issues">Open an issue</a>
+    <a href="https://github.com/snepssen">More from snepssen</a>
+  </div>
+</section>
+
+<footer>
+  Protoke is MIT licensed. Source audio, lyric sheets and rendered videos are yours and stay outside the repository.
+</footer>
+
+</div>
+
+<script src="face-loop.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

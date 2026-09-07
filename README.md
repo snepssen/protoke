@@ -13,8 +13,9 @@ put the face alone on black over a narration track.
 
 Runs on macOS, Windows and Linux.
 
-There is a live demo of the face — the renderer's own frames, played
-back in a canvas — on the [projects page](https://snepssen.github.io/tools-core/#samples).
+**[Project page →](https://snepssen.github.io/protoke/)** — a 28-second clip of
+what it renders, the face animating from the renderer's own exported geometry,
+and screenshots of the interface.
 
 ## Requirements
 

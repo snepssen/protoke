@@ -44,7 +44,7 @@ separation = ["audio-separator[cpu]>=0.28", "audioread"]
 desktop = ["pywebview>=5.0"]
 
 [project.urls]
-Homepage = "https://github.com/snepssen/protoke"
+Homepage = "https://snepssen.github.io/protoke/"
 Source = "https://github.com/snepssen/protoke"
 
 [project.scripts]

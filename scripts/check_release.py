@@ -23,6 +23,15 @@ TEXT_SUFFIXES = {
     ".command", ".css", ".html", ".js", ".json", ".md", ".py", ".sh",
     ".toml", ".txt", ".yaml", ".yml",
 }
+#: The one place media is deliberately published rather than accidentally
+#: committed: the project page needs a clip of what the tool produces, and a
+#:1.7 MB MP4 beside the page beats depending on a third-party player. Kept
+#: deliberately narrow — one directory, one extension list, and a budget — so
+#: the rule still catches every stray render everywhere else.
+PUBLISHED_MEDIA_DIR = "docs"
+PUBLISHED_MEDIA_SUFFIXES = {".mp4", ".webm"}
+PUBLISHED_MEDIA_BUDGET = 8 * 1024 * 1024
+
 PRIVATE_PATHS = [
     re.compile(r"/(?:Users|home)/[A-Za-z0-9._-]+/"),
     re.compile(r"/Volumes/[A-Za-z0-9._ -]+/"),
@@ -41,15 +50,26 @@ def files():
             yield path
 
 
+def published_media(path: Path) -> bool:
+    """Is this one of the page's own deliberately published media files?"""
+    rel = path.relative_to(ROOT)
+    return (rel.parts[0] == PUBLISHED_MEDIA_DIR
+            and path.suffix.lower() in PUBLISHED_MEDIA_SUFFIXES)
+
+
 def source_audit() -> list[str]:
     failures: list[str] = []
     self_path = Path(__file__).resolve()
+    published = 0
     for path in files():
         rel = path.relative_to(ROOT)
         if path.stat().st_size > 5 * 1024 * 1024:
             failures.append(f"{rel}: file exceeds 5 MiB")
         if path.suffix.lower() in GENERATED_SUFFIXES:
-            failures.append(f"{rel}: generated/media/model artifact")
+            if published_media(path):
+                published += path.stat().st_size
+            else:
+                failures.append(f"{rel}: generated/media/model artifact")
         if path == self_path or path.suffix.lower() not in TEXT_SUFFIXES:
             continue
         try:
@@ -65,6 +85,10 @@ def source_audit() -> list[str]:
             if pattern.search(text):
                 failures.append(f"{rel}: contains a likely secret")
                 break
+    if published > PUBLISHED_MEDIA_BUDGET:
+        failures.append(
+            f"{PUBLISHED_MEDIA_DIR}/ media is {published / 1048576:.1f} MiB, "
+            f"over the {PUBLISHED_MEDIA_BUDGET / 1048576:.0f} MiB budget")
     return failures
 
 
