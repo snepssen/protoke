@@ -430,3 +430,15 @@ python3 json_to_srt.py transcript.json output.srt
 
 Generated corrected JSON, ASS subtitles, and video files are intentionally
 ignored by Git.
+
+## The wider workshop
+
+Protoke is one of four local-first projects:
+
+- [Gateway Forge](https://snepssen.github.io/gateway-forge/) — guided-session
+  authoring and an experience journal.
+- [Voice Forge](https://snepssen.github.io/voice-forge/) — measured Piper
+  speech, pronunciation, and export.
+- [Protoke](https://snepssen.github.io/protoke/) — this project.
+- [tools-core](https://snepssen.github.io/tools-core/) — the field utilities
+  behind the larger applications.
