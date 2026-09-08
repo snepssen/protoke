@@ -1,5 +1,7 @@
 # Protoke
 
+**[The page →](https://snepssen.github.io/protoke/)** · what it renders, the timing model, and the downloads.
+
 *proto* + *karaoke*.
 
 Turn an audio track, cover image, and word timings into a karaoke video with
