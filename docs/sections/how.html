@@ -1,0 +1,5 @@
+  <p>The obvious way to put an animated face on a video is to render frames and composite them. That means an image sequence, an alpha channel, a second encoder pass, and a pile of intermediate files that all have to agree about size and frame rate.</p>
+  <p>ASS subtitles can draw filled vector shapes. libass is already in the ffmpeg command drawing the lyrics. So the face is emitted as drawing commands into a second subtitle track and burned in by the pass that was going to run anyway. One ffmpeg invocation, no intermediates, and the "animation" is a text file you can open and read.</p>
+  <p>The cost is that everything has to be expressible as outlines and timings, which turned out to be a useful constraint rather than a limit.</p>
+
+  <div class="note"><b>It is optional in both directions.</b> Switch the face off for a plain karaoke render, or drop the lyrics and the artwork and put the face alone on black over a voice track — which is what the clip above is.</div>

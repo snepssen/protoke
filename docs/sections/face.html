@@ -1,0 +1,26 @@
+  <p class="lede">Early versions swapped between fixed shapes and looked exactly like that: rigid, held together with tape. The fix was to stop picking expressions and start blending dial values, the way a protogen firmware blends morph weights.</p>
+  <p>Six numbers describe an eye — openness, bow, slant, hook, roundness, weight. Six more describe the mouth. Two describe the whole face. Every named expression is just a point in that space, and anything between two of them is a valid face, so a blink is a continuous move rather than a cut.</p>
+
+  <div class="stage">
+    <canvas id="faceCanvas" width="1040" height="460" aria-label="Animated protogen-style visor face, blinking and breathing"></canvas>
+  </div>
+  <div class="stagebar">
+    <button class="primary" id="faceToggle" type="button" data-playing="false">Play the face</button>
+    <span class="status" id="faceStatus">64 frames · one loop</span>
+  </div>
+  <p class="cap">These are the renderer's own frames. The geometry was exported straight out of the Python that writes the subtitle track, so the page cannot drift from the videos — it has no drawing code of its own, only a replay loop. What you are watching is the idle state: breathing, because there is no beat.</p>
+
+  <div class="faces">
+    <div><b>◤‿◥</b><span>visor</span></div>
+    <div><b>◤w◥</b><span>grin</span></div>
+    <div><b>︿﹀</b><span>hooked</span></div>
+    <div><b>▶_◀</b><span>sharp</span></div>
+    <div><b>¬‿¬</b><span>smug</span></div>
+    <div><b>^_^</b><span>content</span></div>
+    <div><b>^w^</b><span>happy</span></div>
+    <div><b>o_o</b><span>wide</span></div>
+    <div><b>-_-</b><span>sleepy</span></div>
+    <div><b>^o^</b><span>delighted</span></div>
+    <div><b>owo</b><span>curious</span></div>
+  </div>
+  <p class="cap">Each of these is a set of dial values, not a drawing. <b>sharp</b> is the clearest case: anger reads as straight edges and stillness, so it raises the sharpness dial — which bends the curves toward their control polygons — and damps the idle motion, rather than swapping in an angry picture.</p>

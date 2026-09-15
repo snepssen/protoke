@@ -1,0 +1,55 @@
+  <p class="lede">The rendering, alignment, face and subtitle code imports only the standard library. Every dependency belongs to an optional transcription or separation engine, so with a timed JSON file beside your track the tool runs with nothing installed at all.</p>
+
+  <div class="install">
+    <div class="cmd">
+      <div class="cmdhead"><span class="os">macOS · Linux</span><button class="copy" type="button" data-copy="git clone https://github.com/snepssen/protoke.git &amp;&amp; cd protoke &amp;&amp; ./setup.sh">Copy</button></div>
+      <pre><code>git clone https://github.com/snepssen/protoke.git
+cd protoke
+./setup.sh          # creates .venv, installs Parakeet
+./start.sh</code></pre>
+    </div>
+    <div class="cmd">
+      <div class="cmdhead"><span class="os">Windows</span><button class="copy" type="button" data-copy="git clone https://github.com/snepssen/protoke.git &amp;&amp; cd protoke &amp;&amp; setup.bat">Copy</button></div>
+      <pre><code>git clone https://github.com/snepssen/protoke.git
+cd protoke
+setup.bat
+start.bat</code></pre>
+    </div>
+  </div>
+
+  <p class="cap">ffmpeg must be built with the <code>subtitles</code> (libass) filter — <code>brew install ffmpeg</code>, <code>winget install Gyan.FFmpeg</code>, or <code>apt install ffmpeg</code> all provide one.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Engine</th><th>Where it runs</th><th>Needed for</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">onnx-parakeet</td><td>Windows, Linux, macOS · x86 and Arm</td><td>Transcription</td><td><span class="pill found">Default</span></td></tr>
+      <tr><td class="mono">mlx-parakeet</td><td>Apple silicon</td><td>Transcription, faster</td><td><span class="pill pub">Optional</span></td></tr>
+      <tr><td class="mono">faster-whisper</td><td>Anywhere</td><td>Fallback model family</td><td><span class="pill prov">Optional</span></td></tr>
+      <tr><td class="mono">macwhisper</td><td>macOS</td><td>Transcription via MacWhisper Pro</td><td><span class="pill prov">Optional</span></td></tr>
+      <tr><td class="mono">audio-separator</td><td>Anywhere</td><td>Wordless singing — yodels, held notes</td><td><span class="pill prov">Optional · ~1 GB</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="cap">Replacing MacWhisper was the point of the rewrite: it is macOS-only and paid, and the tool used to need it. Parakeet TDT through <code>onnx-asr</code> does the same job free on every desktop platform.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Source</h3>
+      <div class="meta">MIT · Python 3.10+</div>
+      <p>The whole thing, including the tests and the release check that has to pass before anything ships.</p>
+      <div class="get"><a href="https://github.com/snepssen/protoke">github.com/snepssen/protoke →</a></div>
+    </div>
+    <div class="card">
+      <h3>Where it came from</h3>
+      <div class="meta">Split out of tools-core</div>
+      <p>It began as one directory of a utility repository and outgrew it. The other field tools are still there.</p>
+      <div class="get"><a href="https://snepssen.github.io/tools-core/">tools-core →</a></div>
+    </div>
+    <div class="card">
+      <h3>The voice</h3>
+      <div class="meta">Piper · GPL-3.0</div>
+      <p>The narration in the clip above was synthesised by Voice Forge, the text-to-speech half of this workshop.</p>
+      <div class="get"><a href="https://snepssen.github.io/voice-forge/">Voice Forge →</a></div>
+    </div>
+  </div>

@@ -1,0 +1,10 @@
+  <p>The interface is a token-protected page on <code>127.0.0.1</code>. With <code>pywebview</code> installed it opens in the operating system's own webview — a couple of megabytes, rather than the couple of hundred an embedded browser costs — and in your default browser otherwise.</p>
+
+  <div class="shot"><img src="img/ui-main.png" alt="Protoke's main window: source and output panels on the left, and a live 1920x1080 preview frame on the right showing the visor face above five lines of lyrics with one word highlighted" loading="lazy" width="1800" height="1266"></div>
+  <p class="cap">The preview is a real layout at output resolution, with the title-safe area drawn as a guide. Changing a colour, a typeface or the line count redraws it immediately; nothing here needs a render to check.</p>
+
+  <div class="shot"><img src="img/ui-face-shape.png" alt="The Face configurator's Shape tab: a live preview of the face above fourteen labelled sliders grouped into eyes, mouth and whole face" loading="lazy" width="1800" height="1266"></div>
+  <p class="cap">All fourteen dials, with the preview above them rendered by the same code that renders the video — so the shape on screen is the shape you will get, not an approximation drawn a second time in JavaScript. Saved faces become presets you can pick per track.</p>
+
+  <div class="shot"><img src="img/ui-settings.png" alt="The Settings sheet showing the transcription engine set to Parakeet ONNX, described as free and running on Windows, Linux and macOS, and vocal separation switched off" loading="lazy" width="1800" height="1266"></div>
+  <p class="cap">Transcription and separation live behind a probe: the app asks each engine whether it can actually run here and reports what it finds, rather than assuming. Vocal separation stays off by default because it pulls PyTorch — about a gigabyte — for an accuracy gain most tracks do not need.</p>
