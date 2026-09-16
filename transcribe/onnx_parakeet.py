@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import sys
 
 from . import audio as audio_io
 from .base import TranscriptionEngine, EngineUnavailable, merge_subword_tokens
@@ -16,6 +17,8 @@ from .base import TranscriptionEngine, EngineUnavailable, merge_subword_tokens
 
 DEFAULT_MODEL = "nemo-parakeet-tdt-0.6b-v2"
 MULTILINGUAL_MODEL = "nemo-parakeet-tdt-0.6b-v3"
+DEFAULT_QUANTIZATION = "int8"
+MACOS_PROVIDERS = ("CPUExecutionProvider",)
 
 
 class OnnxParakeetEngine(TranscriptionEngine):
@@ -34,8 +37,9 @@ class OnnxParakeetEngine(TranscriptionEngine):
                 return False, f"{hint} is not installed"
         return True, ""
 
-    def __init__(self, ffmpeg=None, model=DEFAULT_MODEL, quantization=None,
-                 model_path=None, **_ignored):
+    def __init__(self, ffmpeg=None, model=DEFAULT_MODEL,
+                 quantization=DEFAULT_QUANTIZATION, model_path=None,
+                 providers=None, **_ignored):
         available, reason = self.availability()
         if not available:
             raise EngineUnavailable(reason)
@@ -45,16 +49,26 @@ class OnnxParakeetEngine(TranscriptionEngine):
         self.model_name = model or DEFAULT_MODEL
         self.quantization = quantization
         self.model_path = model_path
+        # CoreML currently expands this large, partly-supported graph while
+        # compiling it. On memory-constrained Macs that can make macOS kill
+        # the whole desktop app before transcription starts. Automatic uses
+        # MLX on Apple silicon; an explicitly selected ONNX run takes this
+        # stable, lower-memory CPU path instead.
+        self.providers = (MACOS_PROVIDERS if providers is None and
+                          sys.platform == "darwin" else providers)
         self._model = None
 
     def _load(self):
         if self._model is None:
             import onnx_asr
 
-            model = onnx_asr.load_model(
-                self.model_name,
-                path=self.model_path,
-                quantization=self.quantization)
+            options = {
+                "path": self.model_path,
+                "quantization": self.quantization,
+            }
+            if self.providers is not None:
+                options["providers"] = self.providers
+            model = onnx_asr.load_model(self.model_name, **options)
             self._model = model.with_timestamps()
         return self._model
 

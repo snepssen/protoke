@@ -3,7 +3,9 @@
 from pathlib import Path
 import sys
 import tempfile
+import types
 import unittest
+from unittest import mock
 
 
 TOOL = Path(__file__).resolve().parents[1]
@@ -12,6 +14,7 @@ sys.path.insert(0, str(TOOL))
 import platform_support  # noqa: E402
 import transcribe  # noqa: E402
 from transcribe import base  # noqa: E402
+from transcribe import onnx_parakeet  # noqa: E402
 
 
 class ProbeTests(unittest.TestCase):
@@ -146,6 +149,43 @@ class AudioChunkTests(unittest.TestCase):
         for offset, chunk in pieces:
             self.assertAlmostEqual(offset, expected, places=5)
             expected += len(chunk) / 16000
+
+
+class OnnxParakeetTests(unittest.TestCase):
+    def engine(self, **options):
+        with mock.patch.object(onnx_parakeet.OnnxParakeetEngine,
+                               "availability", return_value=(True, "")):
+            return onnx_parakeet.OnnxParakeetEngine(
+                ffmpeg="ffmpeg", **options)
+
+    def test_default_model_is_quantized_to_limit_memory(self):
+        engine = self.engine()
+        self.assertEqual(engine.quantization, "int8")
+
+    def test_macos_avoids_coreml_for_the_large_onnx_graph(self):
+        with mock.patch.object(onnx_parakeet.sys, "platform", "darwin"):
+            engine = self.engine()
+        self.assertEqual(engine.providers, ("CPUExecutionProvider",))
+
+    def test_explicit_provider_is_preserved(self):
+        engine = self.engine(providers=("CUDAExecutionProvider",))
+        self.assertEqual(engine.providers, ("CUDAExecutionProvider",))
+
+    def test_load_passes_the_memory_safe_options_to_onnx_asr(self):
+        adapter = mock.Mock()
+        timestamped = mock.Mock()
+        adapter.with_timestamps.return_value = timestamped
+        fake_module = types.SimpleNamespace(load_model=mock.Mock(
+            return_value=adapter))
+        with mock.patch.object(onnx_parakeet.sys, "platform", "darwin"), \
+                mock.patch.dict(sys.modules, {"onnx_asr": fake_module}):
+            engine = self.engine()
+            self.assertIs(engine._load(), timestamped)
+        fake_module.load_model.assert_called_once_with(
+            onnx_parakeet.DEFAULT_MODEL,
+            path=None,
+            quantization="int8",
+            providers=("CPUExecutionProvider",))
 
 
 class PlatformSupportTests(unittest.TestCase):

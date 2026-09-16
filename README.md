@@ -110,9 +110,13 @@ about the machine it runs on. Automatic picks the best available.
 | Whisper | `faster-whisper` | Windows, Linux, macOS | `pip install faster-whisper` |
 
 **Parakeet (ONNX) is the portable default.** It runs NVIDIA's
-`parakeet-tdt-0.6b-v2` through ONNX Runtime and uses CUDA, CoreML, DirectML or
-ROCm when one is present, falling back to CPU. Weights (about 600 MB) download
-from Hugging Face on first use and are cached afterwards.
+`parakeet-tdt-0.6b-v2` through ONNX Runtime and uses CUDA, DirectML or ROCm
+when one is present, falling back to CPU. Protoke uses the INT8 weights (about
+660 MB) to keep memory bounded. On macOS the ONNX engine deliberately uses the
+CPU provider: CoreML expands this partly-supported 0.6B graph while compiling
+it and can exhaust unified memory. Automatic still chooses the faster MLX
+engine first on Apple silicon. Weights download from Hugging Face on first use
+and are cached afterwards.
 
 Long tracks are decoded to mono and split at their quietest points before
 transcription, so peak memory stays flat regardless of track length and

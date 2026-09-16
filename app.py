@@ -122,6 +122,7 @@ FFPROBE = platform_support.find_ffprobe(FFMPEG)
 # ------------------------------------------------------------------ helpers
 
 def log(job, msg):
+    print(f"[Protoke] {msg}", flush=True)
     with JOBS_LOCK:
         job["log"].append(f"[{time.strftime('%H:%M:%S')}] {msg}")
 
