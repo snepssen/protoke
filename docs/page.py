@@ -15,7 +15,7 @@ PAGE = {
         "name": "Protoke",
         "title": "Protoke",
         "badge": "macOS · Windows · Linux · MIT",
-        "fonts": "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Libre+Franklin:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+        "fonts": "fonts.css",
         "description": "Karaoke and narration videos fronted by an animated protogen visor face — drawn as vector outlines by the same subtitle pass that draws the lyrics, with no image sequence and no video layer.",
         "og_description": "proto + karaoke. A karaoke and narration renderer whose face is a subtitle track.",
         "subhead": "<em>proto</em> + <em>karaoke</em>. A karaoke and narration renderer with a protogen visor face that mouths the words — drawn as vector outlines by the same subtitle pass that draws the lyrics, so there is no image sequence and no video layer to composite.",
