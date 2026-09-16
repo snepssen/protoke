@@ -18,6 +18,7 @@ PAGE = {
         "fonts": "fonts.css",
         "description": "Karaoke and narration videos fronted by an animated protogen visor face — drawn as vector outlines by the same subtitle pass that draws the lyrics, with no image sequence and no video layer.",
         "og_description": "proto + karaoke. A karaoke and narration renderer whose face is a subtitle track.",
+        "contact_note": 'Bug reports and shape critiques are equally welcome — the face got most of its improvements from someone describing exactly what looked off about it.',
         "subhead": "<em>proto</em> + <em>karaoke</em>. A karaoke and narration renderer with a protogen visor face that mouths the words — drawn as vector outlines by the same subtitle pass that draws the lyrics, so there is no image sequence and no video layer to composite.",
         "stats": [
             "<b>14</b> dials shape the face",
@@ -65,12 +66,6 @@ PAGE = {
         "body": "install.html",
     },
     {"grid": True},
-    {
-        "id": "contact",
-        "eyebrow": "If something looks wrong",
-        "heading": "Say so",
-        "body": "contact.html",
-    },
     ],
     "footer": [
         "Protoke is MIT licensed. Source audio, lyric sheets and rendered videos are yours and stay outside the repository.",
