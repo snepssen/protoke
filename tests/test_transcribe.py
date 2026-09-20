@@ -158,9 +158,9 @@ class OnnxParakeetTests(unittest.TestCase):
             return onnx_parakeet.OnnxParakeetEngine(
                 ffmpeg="ffmpeg", **options)
 
-    def test_default_model_is_quantized_to_limit_memory(self):
+    def test_default_model_preserves_full_precision_timing(self):
         engine = self.engine()
-        self.assertEqual(engine.quantization, "int8")
+        self.assertIsNone(engine.quantization)
 
     def test_macos_avoids_coreml_for_the_large_onnx_graph(self):
         with mock.patch.object(onnx_parakeet.sys, "platform", "darwin"):
@@ -184,7 +184,7 @@ class OnnxParakeetTests(unittest.TestCase):
         fake_module.load_model.assert_called_once_with(
             onnx_parakeet.DEFAULT_MODEL,
             path=None,
-            quantization="int8",
+            quantization=None,
             providers=("CPUExecutionProvider",))
 
 

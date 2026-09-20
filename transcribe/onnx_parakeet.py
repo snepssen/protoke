@@ -17,7 +17,6 @@ from .base import TranscriptionEngine, EngineUnavailable, merge_subword_tokens
 
 DEFAULT_MODEL = "nemo-parakeet-tdt-0.6b-v2"
 MULTILINGUAL_MODEL = "nemo-parakeet-tdt-0.6b-v3"
-DEFAULT_QUANTIZATION = "int8"
 MACOS_PROVIDERS = ("CPUExecutionProvider",)
 
 
@@ -37,9 +36,8 @@ class OnnxParakeetEngine(TranscriptionEngine):
                 return False, f"{hint} is not installed"
         return True, ""
 
-    def __init__(self, ffmpeg=None, model=DEFAULT_MODEL,
-                 quantization=DEFAULT_QUANTIZATION, model_path=None,
-                 providers=None, **_ignored):
+    def __init__(self, ffmpeg=None, model=DEFAULT_MODEL, quantization=None,
+                 model_path=None, providers=None, **_ignored):
         available, reason = self.availability()
         if not available:
             raise EngineUnavailable(reason)
@@ -53,7 +51,9 @@ class OnnxParakeetEngine(TranscriptionEngine):
         # compiling it. On memory-constrained Macs that can make macOS kill
         # the whole desktop app before transcription starts. Automatic uses
         # MLX on Apple silicon; an explicitly selected ONNX run takes this
-        # stable, lower-memory CPU path instead.
+        # stable CPU path instead. Keep the original full-precision weights:
+        # quantization can move word boundaries, and those boundaries drive
+        # both viseme transitions and between-line head motion.
         self.providers = (MACOS_PROVIDERS if providers is None and
                           sys.platform == "darwin" else providers)
         self._model = None

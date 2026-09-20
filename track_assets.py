@@ -10,10 +10,15 @@ IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff")
 LYRIC_EXTS = (".md", ".txt", ".rtf")
 
 _STOP_HEADING = re.compile(
-    r"^\s*(?:#{1,6}\s*)?(?:suno\s+style(?:\s+tags?)?|negative\s+tags?)\s*:?\s*$",
+    r"^\s*(?:#{1,6}\s*)?\**(?:suno\s+)?style(?:\s+tags?)?\**\s*:?\s*$"
+    r"|^\s*(?:#{1,6}\s*)?\**(?:negative|exclude)\s+tags?\**\s*:?\s*$",
     re.IGNORECASE,
 )
-_DIRECTIVE_LINE = re.compile(r"^\s*\[[^]]+\]\s*$")
+_DIRECTIVE_LINE = re.compile(
+    r"^\s*(?:#{1,6}\s*)?\[[^]]+\](?:\s*\([^)]*\))?\s*$"
+)
+_PARENTHETICAL_LINE = re.compile(r"^\s*\([^)]*\)\s*$")
+_METADATA_LINE = re.compile(r"^\s*\**lyrics\**\s*:?\s*$", re.IGNORECASE)
 _REMOVE_PUNCTUATION = str.maketrans("", "", ".,!?;:\"“”*()[]{}#_~`")
 
 
@@ -108,23 +113,33 @@ def clean_lyric_line(line):
 def clean_reference_lines(lines):
     """Clean lyric lines and stop before prompt/style metadata."""
     cleaned = []
+    after_directive = False
     for line in lines:
         if _STOP_HEADING.match(line):
             break
+        if _METADATA_LINE.match(line):
+            continue
         if _DIRECTIVE_LINE.match(line):
+            after_directive = True
+            continue
+        # A parenthetical directly below a section marker is an arrangement
+        # or delivery note. Parenthetical lines elsewhere can be sung backing
+        # vocals, so retain those (for example, "(I can be anything)").
+        if after_directive and _PARENTHETICAL_LINE.match(line):
             continue
         lyric = clean_lyric_line(line)
         if lyric:
             cleaned.append(lyric)
+            after_directive = False
     return cleaned
 
 
 def parse_track_lyrics(path):
     """Return one cleaned lyric track from a Suno-style Markdown file.
 
-    The first non-empty line is treated as the title. Bracket-only generation
-    directions are discarded, and parsing stops before Suno/negative tags.
-    Source files are never modified.
+    The first non-empty line is treated as the title. Section markers and their
+    following parenthetical arrangement notes are discarded, and parsing stops
+    before style/negative/exclude tags. Source files are never modified.
     """
     with open(path, "r", encoding="utf-8", errors="replace") as handle:
         raw_lines = handle.read().splitlines()
