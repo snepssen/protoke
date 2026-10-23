@@ -266,6 +266,14 @@ class WordlessVocalTests(unittest.TestCase):
         self.assertGreater(sum(voice[middle]) / len(voice[middle]),
                            sum(pad[middle]) / len(pad[middle]))
 
+    def test_a_held_note_is_not_a_voice_on_any_python(self):
+        # Before 3.12, sum() left ~1e-17 of rounding in a steady level's
+        # fluctuation, and dividing by the track's own modulation made
+        # that a full-strength voice: the mouth opened for every held pad.
+        pad = self.face_audio.voiced_strength(self.steady(6.0))
+        middle = pad[len(pad) // 4: 3 * len(pad) // 4]
+        self.assertLess(max(middle), 0.01)
+
     def test_silence_is_never_voice(self):
         quiet = self.track([0.0] * 300)
         self.assertEqual(quiet.segments(0.0, 6.0), [])

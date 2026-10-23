@@ -205,6 +205,7 @@ class PlatformSupportTests(unittest.TestCase):
         self.assertFalse(platform_support.reveal("/no/such/file/here.mp4"))
 
 
+@unittest.skipUnless(sys.version_info >= (3, 11), "tomllib is in the standard library from 3.11")
 class PackagingTests(unittest.TestCase):
     """An installed copy must carry every module the app imports."""
 

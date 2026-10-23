@@ -27,6 +27,11 @@ MIX_THRESHOLD = 0.50
 LOW_HZ, HIGH_HZ = 180, 3400
 #: Syllables per second: the range that separates voice from accompaniment.
 SLOWEST_SYLLABLE, FASTEST_SYLLABLE = 2.0, 10.0
+# The least fluctuation that can count as a voice, in level units (0..1).
+# The scale below divides by the track's own modulation, and a perfectly
+# steady pad has none: before Python 3.12's compensated sum() its rounding
+# residue (~1e-17) was scaled up to a full-strength "voice".
+MODULATION_FLOOR = 0.01
 
 
 def envelope(audio_path, ffmpeg, frame_rate=FRAME_RATE, timeout=900):
@@ -89,7 +94,7 @@ def voiced_strength(levels, frame_rate=FRAME_RATE):
     # transients do not register as speech.
     modulation = _moving_average(
         fluctuation, max(1, int(frame_rate / FASTEST_SYLLABLE) * 3))
-    peak = _percentile(modulation, 0.95) or max(modulation) or 1.0
+    peak = max(MODULATION_FLOOR, _percentile(modulation, 0.95) or max(modulation))
     scaled = [min(1.0, value / peak) for value in modulation]
     # Both have to hold: something quiet cannot be a vocal, and something
     # loud but steady is an instrument.
