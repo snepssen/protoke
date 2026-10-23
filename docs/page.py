@@ -14,7 +14,7 @@ PAGE = {
         "slug": "protoke",
         "name": "Protoke",
         "title": "Protoke",
-        "badge": "macOS · Windows · Linux · MIT",
+        "license": "MIT",
         "fonts": "fonts.css",
         "description": "Karaoke and narration videos fronted by an animated protogen visor face — drawn as vector outlines by the same subtitle pass that draws the lyrics, with no image sequence and no video layer.",
         "og_description": "proto + karaoke. A karaoke and narration renderer whose face is a subtitle track.",
@@ -42,6 +42,8 @@ PAGE = {
         "jump": "How",
         "eyebrow": "Why it works this way",
         "heading": "A face is cheaper as geometry than as pictures",
+        "fold": True,
+        "teaser": 'The face is vector drawing commands in a second subtitle track, burned in by the ffmpeg pass that draws the lyrics anyway.',
         "body": "how.html",
     },
     {
@@ -49,6 +51,8 @@ PAGE = {
         "jump": "The face",
         "eyebrow": "The face",
         "heading": "Eleven expressions, no sprite sheet",
+        "fold": True,
+        "teaser": 'Expressions are points in a space of fourteen dials, so anything between two of them is a valid face.',
         "body": "face.html",
     },
     {
@@ -56,6 +60,8 @@ PAGE = {
         "jump": "The app",
         "eyebrow": "The app",
         "heading": "A local page, not a cloud service",
+        "fold": True,
+        "teaser": "A token-protected page on 127.0.0.1, in the system's own webview, with a live preview at output resolution.",
         "body": "app.html",
     },
     {
@@ -65,6 +71,7 @@ PAGE = {
         "heading": "Python, ffmpeg, and nothing else that is mandatory",
         "body": "install.html",
     },
+    {"folds": True},
     {"grid": True},
     ],
     "footer": [
