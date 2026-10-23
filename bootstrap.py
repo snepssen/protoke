@@ -22,6 +22,11 @@ So "missing" and "the one you have will not do" read as different sentences.
 
 Vocal separation (about a gigabyte of PyTorch) is the one thing not offered by
 default, as `setup.sh` always had it: `--with-separation` adds it.
+
+How it asks is workshop-core's `Bootstrap` (`workshop/`, synced in, never
+edited here), shared with siphon and Media Preflight. What is Protoke's is
+below: ffmpeg found by its libass probe, the engine and separation installed
+by pip into `.venv` rather than by a package manager, and the words.
 """
 
 import os
@@ -31,27 +36,20 @@ import subprocess
 import sys
 
 import platform_support
+from workshop import bootstrap as _shared
+from workshop.bootstrap import Bootstrap
+from workshop.programs import MANAGERS, Program, Registry
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BANNER = "Protoke needs a few things it does not ship."
 
-# How to install ffmpeg with subtitles, per package manager. `needs_root`
-# decides whether the command is run or only printed.
-MANAGERS = {
-    "brew":   {"probe": "brew", "command": ["brew", "install"], "ffmpeg": "ffmpeg-full",
-               "needs_root": False, "label": "Homebrew"},
-    "winget": {"probe": "winget", "command": ["winget", "install", "-e", "--id"],
-               "ffmpeg": "Gyan.FFmpeg", "needs_root": False, "label": "winget"},
-    "apt":    {"probe": "apt-get", "command": ["sudo", "apt-get", "install", "-y"],
-               "ffmpeg": "ffmpeg", "needs_root": True, "label": "apt"},
-    "dnf":    {"probe": "dnf", "command": ["sudo", "dnf", "install", "-y"],
-               "ffmpeg": "ffmpeg", "needs_root": True, "label": "dnf"},
-    "pacman": {"probe": "pacman", "command": ["sudo", "pacman", "-S", "--noconfirm"],
-               "ffmpeg": "ffmpeg", "needs_root": True, "label": "pacman"},
-}
+# Homebrew's plain `ffmpeg` has no libass, so it gets the full build.
+FFMPEG_PACKAGES = {"brew": "ffmpeg-full", "winget": "Gyan.FFmpeg",
+                   "apt": "ffmpeg", "dnf": "ffmpeg", "pacman": "ffmpeg"}
 
 
 def current_manager():
+    """The distribution's own manager first on Linux, as Protoke always had it."""
     order = {"darwin": ["brew"], "win32": ["winget"]}.get(
         sys.platform, ["apt", "dnf", "pacman", "brew"])
     return next((m for m in order if shutil.which(MANAGERS[m]["probe"])), None)
@@ -93,21 +91,8 @@ def unusable_ffmpeg():
     return shutil.which("ffmpeg") is not None and platform_support.find_ffmpeg() is None
 
 
-def survey(separation=False):
-    """What is missing: ffmpeg is needed, the engine is an extra."""
-    needed, extra = [], []
-    if platform_support.find_ffmpeg() is None:
-        needed.append(("ffmpeg", "burns the lyrics into the video (with libass)"))
-    if not has_engine():
-        extra.append(("engine", "transcribes the vocal so the words land on time"))
-    if separation and not has_separation():
-        extra.append(("separation", "isolates the voice for wordless singing (~1 GB)"))
-    return {"manager": current_manager(), "required": needed, "optional": extra}
-
-
 def ffmpeg_command(manager):
-    spec = MANAGERS[manager]
-    return spec["command"] + [spec["ffmpeg"]]
+    return MANAGERS[manager]["command"] + [FFMPEG_PACKAGES[manager]]
 
 
 def engine_steps(separation=False):
@@ -119,114 +104,66 @@ def engine_steps(separation=False):
     return steps
 
 
-def describe(key, manager, separation=False):
-    if key == "ffmpeg":
-        return " ".join(ffmpeg_command(manager)) if manager else "(no package manager found)"
-    return "\n  ".join(" ".join(step) for step in engine_steps(separation))
-
-
 def run(argv, on_line):
-    on_line(f"$ {' '.join(argv)}")
-    try:
-        done = subprocess.run(argv, capture_output=True, text=True, timeout=3600)
-    except (OSError, subprocess.SubprocessError) as error:
-        return str(error)
-    if done.returncode == 0:
-        return None
-    detail = (done.stderr or done.stdout or "").strip().splitlines()
-    return detail[-1] if detail else f"exit {done.returncode}"
+    return _shared.run(argv, on_line)
 
 
-def install(keys, manager, separation=False, on_line=print):
-    """Run the installs. Returns [(key, ok, detail)]; ok is asked of the disk."""
-    results = []
-    for key in keys:
-        if key == "ffmpeg":
-            # Ask the disk, not the exit code: Homebrew returns non-zero for
-            # things that are not failures, such as already installed.
-            problem = run(ffmpeg_command(manager), on_line)
-            ok = platform_support.find_ffmpeg() is not None
-        else:
-            problem = None
-            for step in engine_steps(separation):
-                problem = run(step, on_line)
-                if problem:
-                    break
-            ok = has_engine() and (not separation or has_separation())
-        results.append((key, ok, "" if ok else (problem or "installed, but not found afterwards")))
-    return results
+# Every lookup below goes through this module's names at call time, so a test
+# that replaces one of them is the one asked.
+def _programs(separation):
+    table = {
+        "ffmpeg": Program(
+            "ffmpeg", ("ffmpeg",), "burns the lyrics into the video (with libass)", True,
+            FFMPEG_PACKAGES, version_args=("-version",),
+            locator=lambda: platform_support.find_ffmpeg()),
+        "engine": Program(
+            "engine", (), "transcribes the vocal so the words land on time", False,
+            locator=lambda: venv_python() if has_engine() else None,
+            steps=lambda: engine_steps(separation), via="pip", version_args=None),
+    }
+    if separation:
+        table["separation"] = Program(
+            "separation", (), "isolates the voice for wordless singing (~1 GB)", False,
+            locator=lambda: venv_python() if has_separation() else None,
+            steps=lambda: engine_steps(separation), via="pip", version_args=None)
+    return table
+
+
+def _note():
+    if unusable_ffmpeg():
+        return ("There is an ffmpeg here, but it was built without the "
+                "subtitles (libass)\nfilter Protoke burns the lyrics in "
+                "with. Installing the full build fixes that.")
+    return None
+
+
+def _setup(separation=False):
+    return Bootstrap(
+        Registry(_programs(separation), "Protoke"),
+        banner=BANNER,
+        again="Starting Protoke will ask again.",
+        note=_note,
+        manager=lambda: current_manager(),
+        runner=lambda argv, on_line=None: run(argv, on_line or (lambda line: None)),
+    )
+
+
+def survey(separation=False):
+    """What is missing: ffmpeg is needed, the engine is an extra."""
+    state = _setup(separation).survey()
+    return {"manager": state["manager"],
+            "required": [(p.key, p.purpose) for p in state["required"]],
+            "optional": [(p.key, p.purpose) for p in state["optional"]]}
 
 
 def offer(assume_yes=False, quiet=False, separation=False):
     """Show what is missing and install it. True when nothing needed is left."""
-    state = survey(separation)
-    manager = state["manager"]
-    outstanding = state["required"] + state["optional"]
-    if not outstanding:
-        if not quiet:
-            print("Everything Protoke needs is already installed.")
-        return True
-
-    if not quiet:
-        print(BANNER)
-        print()
-        for key, purpose in state["required"]:
-            print(f"  {key:<10} needed  — {purpose}")
-        for key, purpose in state["optional"]:
-            print(f"  {key:<10} extra   — {purpose}")
-        print()
-        if unusable_ffmpeg():
-            print("There is an ffmpeg here, but it was built without the "
-                  "subtitles (libass)\nfilter Protoke burns the lyrics in "
-                  "with. Installing the full build fixes that.")
-            print()
-
-    keys = [key for key, _ in outstanding]
-    # ffmpeg through a package manager that needs root: print it, never run it.
-    if "ffmpeg" in keys and (manager is None or MANAGERS[manager]["needs_root"]):
-        keys.remove("ffmpeg")
-        if manager is None:
-            print("Protoke could not find a package manager to install ffmpeg with.",
-                  file=sys.stderr)
-            print("On macOS, Homebrew is the usual one: https://brew.sh", file=sys.stderr)
-        elif not quiet:
-            print("Installing ffmpeg needs root, so Protoke will not run it for "
-                  "you. Copy this:\n")
-            print("  " + describe("ffmpeg", manager))
-            print()
-    if not keys:
-        return not state["required"]
-
-    if not assume_yes:
-        for key in keys:
-            print(f"  {describe(key, manager, separation)}")
-        print()
-        what = "it" if len(keys) == 1 else f"all {len(keys)} of these"
-        tools = sorted({MANAGERS[manager]["label"] if key == "ffmpeg" else "pip" for key in keys})
-        try:
-            answer = input(f"Install {what} with {' and '.join(tools)}? [Y/n] ").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return not state["required"]
-        if answer in {"n", "no"}:
-            print("\nNothing installed. Starting Protoke will ask again.")
-            return not state["required"]
-
-    print()
-    results = install(keys, manager, separation)
-    print()
-    for key, ok, detail in results:
-        if ok:
-            print(f"  ✓ {key}")
-        else:
-            print(f"  ✗ {key:<10} {detail}", file=sys.stderr)
-            print(f"    try by hand: {describe(key, manager, separation)}", file=sys.stderr)
-    return ready()
+    return _setup(separation).offer(assume_yes=assume_yes, quiet=quiet)
 
 
 def ready():
     """True when nothing Protoke cannot work without is missing."""
-    return platform_support.find_ffmpeg() is not None
+    return _setup().ready()
 
 
 def main(argv=None):

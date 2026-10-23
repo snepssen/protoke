@@ -10,12 +10,9 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-import sys
 
-
-IS_MACOS = sys.platform == "darwin"
-IS_WINDOWS = os.name == "nt"
-IS_LINUX = sys.platform.startswith("linux")
+from workshop.programs import IS_LINUX, IS_MACOS, IS_WINDOWS  # noqa: F401
+from workshop.programs import exe as _exe, no_console as _no_console
 
 AUDIO_EXTS = ("wav", "mp3", "m4a", "flac", "aiff", "aif", "ogg")
 IMAGE_EXTS = ("png", "jpg", "jpeg", "webp", "tif", "tiff")
@@ -23,10 +20,6 @@ LYRIC_EXTS = ("md", "txt", "rtf")
 
 
 # ------------------------------------------------------------------ binaries
-
-def _exe(name):
-    return name + ".exe" if IS_WINDOWS else name
-
 
 def find_ffmpeg():
     """Prefer a build that actually carries the subtitles (libass) filter.
@@ -85,16 +78,6 @@ def find_ffprobe(ffmpeg_path):
             if os.path.isfile(sibling):
                 return sibling
     return shutil.which(_exe("ffprobe")) or _exe("ffprobe")
-
-
-def _no_console():
-    """Keep console windows from flashing up on Windows."""
-    if not IS_WINDOWS:
-        return {}
-    startup = subprocess.STARTUPINFO()
-    startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    return {"startupinfo": startup,
-            "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)}
 
 
 def ffmpeg_install_hint():
