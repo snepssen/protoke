@@ -144,9 +144,15 @@ def audio_duration(path):
 
 
 def escape_for_subtitles_filter(path):
-    """Escape a path for ffmpeg's subtitles= filter option value."""
-    p = path.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
-    return p.replace("[", "\\[").replace("]", "\\]").replace(",", "\\,")
+    """Escape a subtitle filename through FFmpeg's two filter parsers.
+
+    The subtitles option parses ``:`` and quotes, then the filter graph parses
+    separators and quotes again. The result is inserted without outer quotes;
+    quoting it in the graph makes an apostrophe consume the following filters.
+    """
+    option = path.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
+    return "".join("\\" + char if char in "\\'[],;" else char
+                   for char in option)
 
 
 # ------------------------------------------------------------------ pipeline

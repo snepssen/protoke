@@ -143,9 +143,9 @@ def build_filter_graph(profile, subtitle_path, settings, bpm=None,
         visual_input = "decorated"
 
     if face_path:
-        graph.append(f"[{visual_input}]subtitles='{face_path}'[faced]")
+        graph.append(f"[{visual_input}]subtitles={face_path}[faced]")
         visual_input = "faced"
-    graph.append(f"[{visual_input}]subtitles='{subtitle_path}'[video]")
+    graph.append(f"[{visual_input}]subtitles={subtitle_path}[video]")
     return ";".join(graph), audio_map
 
 

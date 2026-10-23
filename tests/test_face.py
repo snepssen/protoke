@@ -2,13 +2,16 @@
 
 from pathlib import Path
 import pathlib
+import subprocess
 import sys
+import tempfile
 import unittest
 
 
 TOOL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOL))
 
+import app  # noqa: E402
 import face_expression  # noqa: E402
 import face_matrix  # noqa: E402
 import face_shapes  # noqa: E402
@@ -774,6 +777,41 @@ class FilterGraphTests(unittest.TestCase):
             video_formats.VIDEO_FORMATS["landscape"], "lyrics.ass",
             {"visualMode": "still", "waveform": "off"})
         self.assertNotIn("faced", graph)
+
+    @unittest.skipUnless(app.FFMPEG, "ffmpeg with subtitles is unavailable")
+    def test_quoted_and_punctuated_ass_paths_render_both_layers(self):
+        ass = """[Script Info]
+ScriptType: v4.00+
+PlayResX: 320
+PlayResY: 180
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,24,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,0,2,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,Hello
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            face = pathlib.Path(directory) / "Say It [While], It's Warm; face.ass"
+            lyrics = pathlib.Path(directory) / "Say It While It's Warm.ass"
+            face.write_text(ass, encoding="utf-8")
+            lyrics.write_text(ass, encoding="utf-8")
+            graph, _ = video_effects.build_filter_graph(
+                {"width": 320, "height": 180},
+                app.escape_for_subtitles_filter(str(lyrics)),
+                {"visualMode": "still", "waveform": "off"},
+                face_path=app.escape_for_subtitles_filter(str(face)),
+            )
+            result = subprocess.run(
+                [app.FFMPEG, "-hide_banner", "-loglevel", "error",
+                 "-f", "lavfi", "-i", "color=c=black:s=320x180:r=1:d=1",
+                 "-filter_complex", graph, "-map", "[video]",
+                 "-frames:v", "1", "-f", "null", "-"],
+                capture_output=True, text=True, timeout=20,
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":

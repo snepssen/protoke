@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -8,6 +9,7 @@ import unittest
 TOOL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOL))
 
+import app  # noqa: E402
 import lyrics_align  # noqa: E402
 import lyrics_engine  # noqa: E402
 import video_effects  # noqa: E402
@@ -143,7 +145,7 @@ class VideoEffectsTests(unittest.TestCase):
         )
         self.assertIn("zoompan=", graph)
         self.assertIn("showfreqs=s=1920x", graph)
-        self.assertIn("subtitles='words.ass'[video]", graph)
+        self.assertIn("subtitles=words.ass[video]", graph)
         self.assertEqual(audio_map, "[audioout]")
 
     def test_party_mode_uses_manual_tempo_and_side_waveform(self):
