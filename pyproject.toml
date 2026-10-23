@@ -52,7 +52,7 @@ protoke = "app:main"
 
 [tool.setuptools]
 py-modules = [
-  "app", "face_audio", "face_expression", "face_matrix", "face_presets",
+  "app", "bootstrap", "face_audio", "face_expression", "face_matrix", "face_presets",
   "face_preview", "face_render", "face_shapes", "face_visemes",
   "lyrics_align", "lyrics_engine", "platform_support", "track_assets",
   "video_effects", "video_formats", "json_to_srt",

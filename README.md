@@ -22,9 +22,14 @@ and screenshots of the interface.
 ## Requirements
 
 - Python 3.10 or newer
-- ffmpeg built with the `subtitles`/libass filter
-  (`brew install ffmpeg`, `winget install Gyan.FFmpeg`, `apt install ffmpeg`)
+- ffmpeg built with the `subtitles`/libass filter. On macOS that is
+  Homebrew's `ffmpeg-full`: plain `ffmpeg` no longer has libass.
 - A transcription engine, or an existing timed JSON file beside each track
+
+`start.sh` (and `start.bat`, `Start Protoke.command`) offers to install
+whatever is missing before the app opens, and the default answer is yes.
+It never runs `sudo`: on apt, dnf and pacman it prints the ffmpeg command for
+you to run. `python3 bootstrap.py` asks again at any time.
 
 The rendering, alignment, face and ASS-generation modules use only Python's
 standard library. Every dependency is confined to an optional transcription
@@ -36,8 +41,9 @@ engine.
 ./setup.sh
 ```
 
-`setup.bat` on Windows. This creates `.venv` and installs the portable
-Parakeet engine, then prints which engines the tool can see. It is optional —
+`setup.bat` on Windows. This installs without asking: ffmpeg where no root
+is needed, and `.venv` with the portable Parakeet engine. Then it prints which
+engines the tool can see. It is optional —
 skip it if you already have timed JSON files.
 
 Add `--with-separation` to also install vocal separation, which lets the face

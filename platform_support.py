@@ -98,11 +98,15 @@ def _no_console():
 
 
 def ffmpeg_install_hint():
-    if IS_MACOS:
-        return "brew install ffmpeg"
+    """What to do about a missing ffmpeg: run the bootstrap, which offers it.
+
+    Homebrew's plain `ffmpeg` has no libass, so a hint naming it sent people
+    to a build that cannot burn lyrics in. The bootstrap knows the right
+    package per system, and prints a root-needing command rather than run it.
+    """
     if IS_WINDOWS:
-        return "winget install Gyan.FFmpeg"
-    return "sudo apt install ffmpeg  (or your distribution's package)"
+        return "start.bat (it offers to install ffmpeg), or: winget install Gyan.FFmpeg"
+    return "./start.sh (it offers to install ffmpeg), or: python3 bootstrap.py"
 
 
 # ---------------------------------------------------------------- typography

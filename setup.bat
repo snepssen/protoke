@@ -1,7 +1,8 @@
 @echo off
-rem One-time setup: create .venv and install the portable Parakeet engine.
+rem Install everything Protoke needs without asking: ffmpeg with libass via
+rem winget, and .venv with the Parakeet transcription engine.
+rem   setup.bat --with-separation   also vocal separation (PyTorch, ~1 GB)
 cd /d "%~dp0"
-
 set PYTHON=
 where py >nul 2>&1 && set PYTHON=py -3
 if "%PYTHON%"=="" (
@@ -11,16 +12,8 @@ if "%PYTHON%"=="" (
   echo Python 3.10 or newer is required but was not found on PATH.
   exit /b 1
 )
-
-if not exist ".venv" (
-  echo Creating .venv
-  %PYTHON% -m venv .venv || exit /b 1
-)
-
-echo Installing the Parakeet (ONNX) transcription engine
-".venv\Scripts\python.exe" -m pip install --upgrade pip >nul
-".venv\Scripts\python.exe" -m pip install "onnx-asr[cpu,hub]" || exit /b 1
-
+%PYTHON% bootstrap.py --yes %*
+if not exist ".venv\Scripts\python.exe" exit /b 1
 echo.
 ".venv\Scripts\python.exe" app.py --engines
 echo.
