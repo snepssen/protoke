@@ -122,10 +122,21 @@ def _words_from_result(result, offset, chunk_seconds):
 
 def model_is_cached(model_name=DEFAULT_MODEL):
     """Whether Hugging Face already holds the weights, so the UI can warn
-    before a first run spends several hundred megabytes of download."""
+    before a first run spends several hundred megabytes of download.
+
+    onnx-asr names models by its own aliases ("nemo-parakeet-tdt-0.6b-v2"),
+    which it downloads from a different repository
+    ("istupakov/parakeet-tdt-0.6b-v2-onnx"), so the alias is translated
+    first."""
+    repo = model_name
+    try:
+        from onnx_asr.resolver import model_repos
+        repo = model_repos.get(model_name, model_name)
+    except ImportError:
+        pass
     home = os.environ.get("HF_HOME") or os.path.expanduser("~/.cache/huggingface")
-    folder = model_name.split("/")[-1]
-    hub = os.path.join(home, "hub")
-    if not os.path.isdir(hub):
+    snapshots = os.path.join(os.environ.get("HF_HUB_CACHE") or os.path.join(home, "hub"),
+                             "models--" + repo.replace("/", "--"), "snapshots")
+    if not os.path.isdir(snapshots):
         return False
-    return any(folder in entry for entry in os.listdir(hub))
+    return any(os.listdir(os.path.join(snapshots, rev)) for rev in os.listdir(snapshots))

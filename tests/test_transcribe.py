@@ -1,6 +1,7 @@
 """The transcription seam and the cross-platform support layer."""
 
 from pathlib import Path
+import os
 import sys
 import tempfile
 import types
@@ -250,6 +251,20 @@ def tomllib_load(path):
     import tomllib
 
     return tomllib.loads(path.read_text())
+
+
+class ModelCachedTests(unittest.TestCase):
+    def test_translates_the_onnx_asr_alias_to_its_repository(self):
+        with tempfile.TemporaryDirectory() as home:
+            snap = Path(home, "hub", "models--istupakov--parakeet-tdt-0.6b-v2-onnx", "snapshots", "abc")
+            with mock.patch.dict(os.environ, {"HF_HOME": home}, clear=False):
+                os.environ.pop("HF_HUB_CACHE", None)
+                self.assertFalse(onnx_parakeet.model_is_cached("nemo-parakeet-tdt-0.6b-v2"))
+                snap.mkdir(parents=True)
+                self.assertFalse(onnx_parakeet.model_is_cached("nemo-parakeet-tdt-0.6b-v2"))  # empty snapshot
+                (snap / "vocab.txt").write_text("x")
+                self.assertTrue(onnx_parakeet.model_is_cached("nemo-parakeet-tdt-0.6b-v2"))
+                self.assertFalse(onnx_parakeet.model_is_cached("nemo-parakeet-tdt-0.6b-v3"))
 
 
 if __name__ == "__main__":
