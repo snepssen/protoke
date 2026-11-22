@@ -179,12 +179,14 @@ class OnnxParakeetTests(unittest.TestCase):
         fake_module = types.SimpleNamespace(load_model=mock.Mock(
             return_value=adapter))
         with mock.patch.object(onnx_parakeet.sys, "platform", "darwin"), \
-                mock.patch.dict(sys.modules, {"onnx_asr": fake_module}):
+                mock.patch.dict(sys.modules, {"onnx_asr": fake_module}), \
+                mock.patch.object(onnx_parakeet.hub, "pinned_snapshot",
+                                  return_value="/pinned"):
             engine = self.engine()
             self.assertIs(engine._load(), timestamped)
         fake_module.load_model.assert_called_once_with(
             onnx_parakeet.DEFAULT_MODEL,
-            path=None,
+            path="/pinned",
             quantization=None,
             providers=("CPUExecutionProvider",))
 
@@ -256,7 +258,8 @@ def tomllib_load(path):
 class ModelCachedTests(unittest.TestCase):
     def test_translates_the_onnx_asr_alias_to_its_repository(self):
         with tempfile.TemporaryDirectory() as home:
-            snap = Path(home, "hub", "models--istupakov--parakeet-tdt-0.6b-v2-onnx", "snapshots", "abc")
+            snap = Path(home, "hub", "models--istupakov--parakeet-tdt-0.6b-v2-onnx", "snapshots",
+                        "0bbb45a3365852604aef28b538a8f066f4ccaa85")
             with mock.patch.dict(os.environ, {"HF_HOME": home}, clear=False):
                 os.environ.pop("HF_HUB_CACHE", None)
                 self.assertFalse(onnx_parakeet.model_is_cached("nemo-parakeet-tdt-0.6b-v2"))
@@ -265,6 +268,9 @@ class ModelCachedTests(unittest.TestCase):
                 (snap / "vocab.txt").write_text("x")
                 self.assertTrue(onnx_parakeet.model_is_cached("nemo-parakeet-tdt-0.6b-v2"))
                 self.assertFalse(onnx_parakeet.model_is_cached("nemo-parakeet-tdt-0.6b-v3"))
+                old = snap.with_name("abc")  # another commit doesn't count
+                snap.rename(old)
+                self.assertFalse(onnx_parakeet.model_is_cached("nemo-parakeet-tdt-0.6b-v2"))
 
 
 if __name__ == "__main__":

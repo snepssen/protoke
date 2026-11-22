@@ -11,6 +11,7 @@ import importlib.util
 import platform
 import sys
 
+from . import hub
 from .base import TranscriptionEngine, EngineUnavailable, normalise_words
 
 
@@ -44,7 +45,7 @@ class MlxParakeetEngine(TranscriptionEngine):
 
         if progress:
             progress(0.06, f"Loading {self.model_name}")
-        model = from_pretrained(self.model_name)
+        model = from_pretrained(hub.pinned_snapshot(self.model_name) or self.model_name)
         if progress:
             progress(0.15, "Transcribing with MLX")
         result = model.transcribe(audio_path)

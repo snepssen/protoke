@@ -12,6 +12,7 @@ import os
 import sys
 
 from . import audio as audio_io
+from . import hub
 from .base import TranscriptionEngine, EngineUnavailable, merge_subword_tokens
 
 
@@ -63,7 +64,7 @@ class OnnxParakeetEngine(TranscriptionEngine):
             import onnx_asr
 
             options = {
-                "path": self.model_path,
+                "path": self.model_path or self._pinned_path(),
                 "quantization": self.quantization,
             }
             if self.providers is not None:
@@ -71,6 +72,14 @@ class OnnxParakeetEngine(TranscriptionEngine):
             model = onnx_asr.load_model(self.model_name, **options)
             self._model = model.with_timestamps()
         return self._model
+
+    def _pinned_path(self):
+        """The pinned commit's files, in a folder onnx-asr loads as is. Only
+        the precision in use is fetched, as onnx-asr itself would."""
+        suffix = f".{self.quantization}" if self.quantization else ""
+        return hub.pinned_snapshot(_repo(self.model_name), [
+            "config.json", "vocab.txt",
+            f"encoder-model{suffix}.onnx*", f"decoder_joint-model{suffix}.onnx*"])
 
     def transcribe(self, audio_path, progress=None):
         def report(fraction, message):
@@ -120,15 +129,11 @@ def _words_from_result(result, offset, chunk_seconds):
     return merged
 
 
-def model_is_cached(model_name=DEFAULT_MODEL):
-    """Whether Hugging Face already holds the weights, so the UI can warn
-    before a first run spends several hundred megabytes of download.
-
-    onnx-asr names models by its own aliases ("nemo-parakeet-tdt-0.6b-v2"),
+def _repo(model_name):
+    """onnx-asr names models by its own aliases ("nemo-parakeet-tdt-0.6b-v2"),
     which it downloads from a different repository
-    ("istupakov/parakeet-tdt-0.6b-v2-onnx"), so the alias is translated
-    first. Without onnx-asr installed (the UI checks before it is), the
-    Parakeet aliases its resolver knows are used instead."""
+    ("istupakov/parakeet-tdt-0.6b-v2-onnx"). Without onnx-asr installed (the
+    UI checks before it is), the Parakeet aliases its resolver knows are used."""
     try:
         from onnx_asr.resolver import model_repos
     except ImportError:
@@ -136,10 +141,16 @@ def model_is_cached(model_name=DEFAULT_MODEL):
             f"nemo-parakeet-{name}": f"istupakov/parakeet-{name}-onnx"
             for name in ("ctc-0.6b", "rnnt-0.6b", "tdt-0.6b-v2", "tdt-0.6b-v3")
         }
-    repo = model_repos.get(model_name, model_name)
-    home = os.environ.get("HF_HOME") or os.path.expanduser("~/.cache/huggingface")
-    snapshots = os.path.join(os.environ.get("HF_HUB_CACHE") or os.path.join(home, "hub"),
-                             "models--" + repo.replace("/", "--"), "snapshots")
-    if not os.path.isdir(snapshots):
+    return model_repos.get(model_name, model_name)
+
+
+def model_is_cached(model_name=DEFAULT_MODEL):
+    """Whether Hugging Face already holds the weights (at the pinned commit),
+    so the UI can warn before a first run spends several hundred megabytes of
+    download."""
+    folder = hub.snapshot_dir(_repo(model_name))
+    if not os.path.isdir(folder):
         return False
-    return any(os.listdir(os.path.join(snapshots, rev)) for rev in os.listdir(snapshots))
+    if os.path.basename(folder) != "snapshots":
+        return any(os.scandir(folder))
+    return any(os.listdir(os.path.join(folder, rev)) for rev in os.listdir(folder))
