@@ -127,13 +127,16 @@ def model_is_cached(model_name=DEFAULT_MODEL):
     onnx-asr names models by its own aliases ("nemo-parakeet-tdt-0.6b-v2"),
     which it downloads from a different repository
     ("istupakov/parakeet-tdt-0.6b-v2-onnx"), so the alias is translated
-    first."""
-    repo = model_name
+    first. Without onnx-asr installed (the UI checks before it is), the
+    Parakeet aliases its resolver knows are used instead."""
     try:
         from onnx_asr.resolver import model_repos
-        repo = model_repos.get(model_name, model_name)
     except ImportError:
-        pass
+        model_repos = {
+            f"nemo-parakeet-{name}": f"istupakov/parakeet-{name}-onnx"
+            for name in ("ctc-0.6b", "rnnt-0.6b", "tdt-0.6b-v2", "tdt-0.6b-v3")
+        }
+    repo = model_repos.get(model_name, model_name)
     home = os.environ.get("HF_HOME") or os.path.expanduser("~/.cache/huggingface")
     snapshots = os.path.join(os.environ.get("HF_HUB_CACHE") or os.path.join(home, "hub"),
                              "models--" + repo.replace("/", "--"), "snapshots")
